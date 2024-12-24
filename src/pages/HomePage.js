@@ -529,7 +529,9 @@ const HomePage  = ()=> {
   const [error, setError] = useState(null);
   const [myNumber, setMyNumber] = useState(0)
   const [bookSelected, setBookSelected] = useState("")
-  const [selectedVersion, setSelectedVersion] = useState("ANY")
+  const [selectedVersion, setSelectedVersion] = useState(()=>{
+    localStorage.getItem("currentVersion") 
+  })
   const [currentTestement, setCurrentTestement] = useState("OT")
   const [currentBook, setCurrentbook] = useState("GEN")
   const [currentVersion, setCurrentVersion] = useState("ANY")
@@ -539,10 +541,7 @@ const HomePage  = ()=> {
   const [isBottomSheetOpen, setIsBottomSheetOpen] = useState(false);
   const [textColor, setTextColor] = useState([])
   const [pageIndex, setPageIndex] = useState(1);
-
-
-  
-  const [itemCount, setItemCount] = useState([])
+  const [itemCount, setItemCount] = useState([]);;
  
 
 
