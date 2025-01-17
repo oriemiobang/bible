@@ -5,7 +5,7 @@ const Footer = ()=> {
         <footer className="dark:bg-slate-800 bg-slate-200 md:h-80 gap-3 pb-36 w-full items-center flex md:flex-row flex-col  justify-around pt-5 md:pt-10">
             {/* <p>�� 2021 DHA Anywaa. All rights reserved.</p> */}
 
-            <div className="flex flex-col items-center justify-center">
+            <div className="flex flex-col items-center justify-center mt-20">
             <h1 className='font-bold text-2xl md:text-4xl hidden md:block' >Wëël Jwøk</h1>
             <div className="flex flex-col items-center justify-center mt-6">
                 <div className="flex flex-col items-center text-xl font-bold">

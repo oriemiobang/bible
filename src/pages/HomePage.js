@@ -12,8 +12,12 @@ import { RiHome6Line } from "react-icons/ri";
 import { MdOutlineMenuBook } from "react-icons/md";
 import { PiBookmarksSimpleFill } from "react-icons/pi";
 import { Link, NavLink, useNavigate } from "react-router-dom"
+import { useAuthContext } from "../hook/useAuthContext";
+import { MdCancel } from "react-icons/md";
 // import { OrbitProgress } from 'react-spinners';
 import { PulseLoader } from 'react-spinners';
+
+
 const HomePage  = ()=> {
 
   
@@ -527,21 +531,45 @@ const HomePage  = ()=> {
   const [bibleData, setBibleData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [myNumber, setMyNumber] = useState(0)
-  const [bookSelected, setBookSelected] = useState("")
-  const [selectedVersion, setSelectedVersion] = useState(()=>{
-    localStorage.getItem("currentVersion") 
+  const [myNumber, setMyNumber] = useState(()=> {
+    return parseInt(localStorage.getItem("myNumber")) || 0
   })
-  const [currentTestement, setCurrentTestement] = useState("OT")
-  const [currentBook, setCurrentbook] = useState("GEN")
-  const [currentVersion, setCurrentVersion] = useState("ANY")
-  const [bookNumber, setBookNumber] = useState(0)
+  // const [bookSelected, setBookSelected] = useState("")
+  const [selectedVersion, setSelectedVersion] = useState(()=> {
+    return localStorage.getItem("selectedVersion") || "ANY"
+  })
+  const [currentTestement, setCurrentTestement] = useState(()=> {
+    return localStorage.getItem("currentTestement") || "OT"
+  })
+  const [currentBook, setCurrentbook] = useState(()=> {
+    return localStorage.getItem("currentBook") || "GEN"
+  })
+  const [currentVersion, setCurrentVersion] = useState(()=> {
+    return localStorage.getItem("currentVersion") || "ANY"
+  })
+  const [bookNumber, setBookNumber] = useState(()=> {
+    return parseInt(localStorage.getItem("bookNumber")) || 0
+  })
   const [dialog, setDialog] = useState(false)
   const [verseList, setVerseList] = useState([])
   const [isBottomSheetOpen, setIsBottomSheetOpen] = useState(false);
   const [textColor, setTextColor] = useState([])
   const [pageIndex, setPageIndex] = useState(1);
-  const [itemCount, setItemCount] = useState([]);;
+  const [showPopup, setShowPopup] = useState(false);
+const [textList, setTextList] = useState([]);
+  const togglePopup = () => {
+      setShowPopup(true);
+      setTimeout(()=>{
+        setShowPopup(false);
+      }, 4000)
+  };
+
+
+
+
+  
+  const [itemCount, setItemCount] = useState([])
+  const {user} = useAuthContext()
  
 
 
@@ -550,12 +578,14 @@ const HomePage  = ()=> {
     if(currentVersion === "AMH"){
       if ( myNumber < bibleData?.chapters.length - 1) {
         setMyNumber(myNumber + 1); // Go to next chapter
+        localStorage.setItem("myNumber", myNumber + 1)
       }
 
     }
      else {
       if (myNumber < bibleData?.text.length - 1) {
         setMyNumber(myNumber + 1); // Go to next chapter
+        localStorage.setItem("myNumber", myNumber + 1)
       }
 
      }
@@ -566,27 +596,57 @@ const HomePage  = ()=> {
   const handleSub = () => {
     if (myNumber > 0) {
       setMyNumber(myNumber - 1); // Go to previous chapter
+      localStorage.setItem("myNumber", myNumber - 1)
 
     
     }
   };
 
+  const fetchDatabase = () => {
+    console.log("Fetching database...", user);
+    if (user) {
+      console.log('inside');
+      fetch('/api/data', {
+        method: 'GET', // The HTTP method should be outside of headers
+        headers: {
+          'Authorization': `Bearer ${user.token}`,
+          'Content-Type': 'application/json', // Added for clarity
+        },
+      })
+        .then(response => {
+          if (!response.ok) {
+            throw new Error('Error fetching Bible database data');
+          }
+          return response.json();
+        })
+        .then(data => {
+          console.log(data[0].highlights);
+          setTextColor(data[0].highlights);
+        })
+        .catch(err => {
+          console.error(err.message);
+        });
+    }
+  }
+//   useEffect(() => {
+ 
+
+// }, [textColor]);
+
+
+
   const fetchData = (testement, book, version)=> {
     let path = ""
     if(version === "ANY"){
-      console.log(testement)
-      console.log(book)
-      console.log(version)
+    
       path = `/api/any/${testement}/${book}`
     }else if(version === "AMH"){
-      console.log('it is very true')
       path = `/api/amh/${book}`
     } else{
       path = `/api/eng/${testement}/${book}/${version}`
-
     }
     
-    console.log(`the path ${path}`)
+ 
     // Fetch data from the backend API
     fetch(path)
         .then(response => {
@@ -597,6 +657,7 @@ const HomePage  = ()=> {
         })
         .then(data => {
             setBibleData(data)
+        
             setLoading(false);
         })
         .catch(err => {
@@ -610,6 +671,14 @@ const HomePage  = ()=> {
 
 }, []);
 
+useEffect(() => {
+  fetchDatabase(); 
+}, [
+  user
+  //  textColor
+
+]);
+
 if (loading) {
   return  ( <div className="w-full h-screen flex items-center justify-center">
   <PulseLoader color="#eba20c" size={10} />
@@ -621,18 +690,18 @@ if (error) {
 }
 
 const handleSelectBook= (e)=> {
-
-
-
   console.log(e.target.key)
   const key  = parseInt(e.target.value.split('_')[0],10) - 1
   const value = e.target.value.split('_')[1]
   setBookNumber(key)
+  localStorage.setItem('bookNumber',key)
   const itemCount = parseInt(bookList[key].number)
   const items =  Array.from({ length:itemCount }, (_, i) => i + 1);
   setItemCount(items)
   showDialog(key)
+  console.log(value)
   setCurrentbook(value)
+  localStorage.setItem("currentBook", value)
  
 }
 const handleSelectedVersion= (e)=> {
@@ -640,7 +709,9 @@ const handleSelectedVersion= (e)=> {
   console.log("inside")
   console.log(e.target.value)
   setSelectedVersion(e.target.value)
+  localStorage.setItem("selectedVersion", e.target.value)
   setCurrentVersion(e.target.value)
+  localStorage.setItem("selectedVersion", e.target.value)
 
 
   let nowBook = ""
@@ -649,10 +720,12 @@ const handleSelectedVersion= (e)=> {
     nowBook = bookList[bookNumber].amharic.split(".")[0]
     console.log(nowBook)
     setCurrentbook(nowBook)
+    localStorage.setItem("currentBook", nowBook)
     fetchData(currentTestement, nowBook, e.target.value)
   }  else {
     nowBook = bookList[bookNumber].abbrev
     setCurrentbook(nowBook)
+    localStorage.setItem("currentBook", nowBook)
     fetchData(currentTestement, nowBook, e.target.value)
   }
 
@@ -661,63 +734,92 @@ const handleSelectedVersion= (e)=> {
 
 const handleNumber = (number)=>{
   setMyNumber(number - 1)
-  setBookSelected(bookList[bookNumber].title)
+  localStorage.setItem("myNumber", number - 1)
+  // setBookSelected(bookList[bookNumber].title)
   
   let myTestement = ""
   if(bookNumber < 39) {
     setCurrentTestement("OT")
+    localStorage.setItem("currentTestement", "OT")
     myTestement = "OT"
   } else {
     setCurrentTestement("NT")
+    localStorage.setItem("currentTestement", "NT")
     myTestement = "NT"
   }
   // fetch for amharic
   if(currentVersion === "AMH"){
     fetchData(myTestement, currentBook, currentVersion)
-
   }else {
     fetchData(myTestement,currentBook, currentVersion)
   }
 
   
   console.log(`the current book is ${bookList[bookNumber].title}`)
+  console.log(currentBook)
   setDialog(false)
 
 }
 
 
 const showDialog = ()=> {
-
  setDialog(true)
-  
-
 }
 
 const handleDialog = ()=> {
   setDialog(false)
 }
 
-const handleVerseClick = (id) => {
+const handleVerseClick = (id, text) => {
   if (verseList.includes(id)) {
     const updatedVerselist = verseList.filter(item => item !== id);
     setVerseList(updatedVerselist);
   } else {
     setVerseList([...verseList, id]);
+    setTextList([...textList, {verse: text, id: id}]);
+
   }
   setIsBottomSheetOpen(true);
 };
 
 
-const handTextColor = (colorIndex) => {
-  const verseColor = verseList.map((id) => {
-    // console.log(`The id is ${id}`);
-    return {
-      id: id,
-      color: colorIndex,  
-    };
-  });
+const handTextColor = async (colorIndex) => {
+  if (user) {
+    const verseColor = verseList.map((id) => (
+      {
+      verseId: id,
+      color: parseInt(colorIndex,10)
+  }));
 
-  setTextColor((prevTextColor) => [...prevTextColor, ...verseColor]);
+
+      // const data = { color: colorIndex, verse_id: verseId }; // Match server expectations
+verseColor.map(async(verse)=> {
+  
+  try {
+    setTextColor((prevTextColor) => [...prevTextColor, ...verseColor]);
+    console.log(verse);
+      const response = await fetch('/api/data/highlight', {
+          method: 'POST',
+          headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${user.token}`,
+          },
+          body: JSON.stringify(verse),
+      });
+   
+      const json = await response.json(); // Await the JSON parsing
+      if (response.ok) {
+      } 
+  } catch (error) {
+      console.error('Request failed:', error); // Handle fetch errors
+  }
+})
+  }
+  else{
+    console.log("User not logged in")
+    togglePopup()
+    console.log(showPopup)
+  }
 };
 
 
@@ -727,6 +829,101 @@ const hideDialog = ()=> {
 
 const handlePageIndex = (index)=>{
   setPageIndex(index)
+}
+
+const handleBookMark = async () => {
+  if(user){
+    let myBook=''
+    let wholeBookmark = ''
+    let wholeverseNumber = ''
+    let verseId = ''
+
+  
+      if(currentVersion === 'ANY'){
+        myBook = bookList[bookNumber].anywaa
+
+      } else if(currentVersion === 'AMH'){
+        myBook =  bookList[bookNumber].amharic.split('_')[1].split('.')[0]
+      } else {
+        myBook =  bookList[bookNumber].title
+      }
+
+   
+
+    if(textList.length === 1){
+      wholeBookmark = textList[0].verse
+      wholeverseNumber = textList[0].id.split('.')[2]
+      // verseId = textList[0].id.split('.')[2]
+      
+
+    } else if(textList.length > 1){
+      textList.map((text)=> {
+        wholeBookmark += `${text.verse} `
+        wholeverseNumber += `${text.id.split('.')[2]},  `
+
+      })
+
+
+
+    }
+
+
+    const bookmarkData = {verse: wholeBookmark, book: `${myBook} ${verseList[0].split('.')[1]}: ${wholeverseNumber} `, version: currentVersion}
+    setTextList([])
+  try {
+
+      const response = await fetch('/api/data/bookmark', {
+          method: 'POST',
+          headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${user.token}`,
+          },
+          body: JSON.stringify(bookmarkData),
+      });
+   
+      const json = await response.json(); // Await the JSON parsing
+      if (response.ok) {
+        console.log('Bookmark saved successfully')
+      } 
+
+ } catch (error) {
+     console.error('Request failed:', error); // Handle fetch errors
+ }
+    
+  }
+}
+
+const handleRemoveHighlight= async()=> {
+  console.log(verseList)
+if(user){
+    
+  try {
+    verseList.map(async(verse)=> {
+    const color = textColor.filter(item => item.verseId !== verse);
+    setTextColor(color)
+     const response = await fetch(`/api/data/highlight/${verse}`, {
+       method: 'DELETE',
+       headers: {
+           'Content-Type': 'application/json',
+           'Authorization': `Bearer ${user.token}`
+       },
+       body: JSON.stringify({verseId: verse})
+   });
+
+   const json = await response.json(); // Await the JSON parsing
+   if (response.ok) {
+ 
+   
+       
+   } 
+    })
+ } catch (error) {
+     console.error('Request failed:', error); // Handle fetch errors
+ }
+// })
+}else{
+  togglePopup()
+}
 }
 
     return (
@@ -742,8 +939,11 @@ const handlePageIndex = (index)=>{
   >
     {bookList.map((book, index) => {
       const key = parseInt(book.amharic.split('_')[0], 10);
+      // console.log(key)
 
       if (currentVersion === "ANY") {
+
+        // setBookName(book.anywaa)
       
           return (
             <option key={key} value={`${key}_${book.abbrev}`}>
@@ -752,12 +952,14 @@ const handlePageIndex = (index)=>{
           );
       
       } else if (currentVersion === "AMH") {
+        // setBookName(book.amharic.split('_')[1].split('.')[0])
         return (
           <option key={key} value={book.amharic}>
             {book.amharic.split('_')[1].split('.')[0]}
           </option>
         );
       } else {
+        // setBookName(book.title)
         return (
           <option key={key} value={`${key}_${book.abbrev}`}>
             {book.title}
@@ -798,7 +1000,7 @@ const handlePageIndex = (index)=>{
       <div className="grid grid-cols-5 gap-1  w-full ">
         {itemCount.map((number)=> {
           return (
-            <div onClick={() =>handleNumber(number)} key={number} className="p-2 text-lg text-gray-600 dark:bg-slate-800 bg-white rounded-md hover:bg-gray-100">
+            <div onClick={() =>handleNumber(number)} key={number} className="p-2 text-lg dark:text-gray-200 text-gray-600 dark:bg-slate-800 bg-white rounded-md hover:bg-gray-100">
               {number}
             </div>
           )
@@ -810,8 +1012,9 @@ const handlePageIndex = (index)=>{
 }
    </div>
    {(currentVersion === "ANY" && currentTestement === "NT" && bibleData?.text[myNumber]?.audioLink) && (
-  <div className="flex justify-center  pt-2 ">
+  <div key={ bibleData?.text[myNumber]?.audioLink} className="flex justify-center  pt-2 ">
     <audio
+
       className="mt-5 md:block hidden"
       controls
       ref={(audioElement) => {
@@ -826,9 +1029,28 @@ const handlePageIndex = (index)=>{
       />
       Your browser does not support the audio element.
     </audio>
+
+    
+      
+    
    
   </div>
 )}
+
+{
+  showPopup && <div className="relative">
+  <div
+         className={` fixed top-20 right-5 transform -translate-y-1/2  bg-white shadow-lg p-6 w-64 
+          rounded-lg transition-transform duration-700 ${
+              showPopup ? 'translate-x-0' : 'translate-x-full'
+          }`}
+  >
+    
+      <p className="text-gray-600 ">Sign in to highlight your texts.</p>
+   
+  </div>
+</div>
+}
 
     </div>
     
@@ -854,8 +1076,8 @@ const handlePageIndex = (index)=>{
         )
       })  :  
   bibleData.text[myNumber]?.text.map((section, index) => {
-    const colorItem = textColor.find((item) => item.id === `${bibleData.text[myNumber].ID}.${section.ID}`);
-const bgColor = colorItem ? colorList[colorItem.color] : null;
+    const colorItem = textColor.find((item) => item.verseId === `${bibleData.text[myNumber].ID}.${section.ID}`);
+    const bgColor = colorItem ? colorList[colorItem.color] : null;
 
   
     return (
@@ -872,7 +1094,7 @@ const bgColor = colorItem ? colorList[colorItem.color] : null;
 
             {
              
-            index ===0? <h2 className="text-4xl md:text-6xl font-bold text-orange-400">{myNumber + 1}</h2> : <p className="text-gray-500">{section.ID}</p> }
+            index ===0? <h2 className="text-4xl md:text-6xl font-bold text-orange-400">{parseInt(myNumber) + 1}</h2> : <p className="text-gray-500">{section.ID}</p> }
 
             
 <p
@@ -883,7 +1105,7 @@ const bgColor = colorItem ? colorList[colorItem.color] : null;
         : "underline decoration-dotted decoration-gray-500 underline-offset-4"
       : bgColor? `${bgColor}`: ""
   }
-  onClick={() => handleVerseClick(`${bibleData.text[myNumber].ID}.${section.ID}`)}
+  onClick={() => handleVerseClick(`${bibleData.text[myNumber].ID}.${section.ID}`, section.text)}
 >
   {section.text}
 </p>
@@ -978,13 +1200,13 @@ const bgColor = colorItem ? colorList[colorItem.color] : null;
         </div>
 
 
-        {verseList.length > 0 && <div className={`fixed md:w-[38%]  md:left-96 md:ml-52 inset-x-0 bottom-0 dark:bg-slate-900 bg-white shadow-lg p-4 rounded-t-lg z-50
+        {verseList.length > 0 && <div className={`fixed md:w-[38%]  md:left-96 md:ml-5  inset-x-0 bottom-0 dark:bg-slate-900 bg-white shadow-lg p-4 rounded-t-lg z-50
                 transform transition-transform duration-500 ease-in-out`}
     style={{ minHeight: "20vh", transform: isBottomSheetOpen ? "translateY(0)" : "translateY(100%)" }}>
          <div className="flex justify-between ">
 
          <div className="flex justify-between  w-[60%] items-center">
-            <div><MdOutlineBookmarkAdd size={35} /></div>
+            <div onClick={handleBookMark}><MdOutlineBookmarkAdd size={35} /></div>
             <div><FaRegCopy size={28} /></div>
             <div><FaShareNodes size={28} /></div>
             <div><TfiViewListAlt size={28} /></div>
@@ -998,7 +1220,10 @@ const bgColor = colorItem ? colorList[colorItem.color] : null;
 
          </div>
 
-         <div className="flex mt-3 gap-3 overflow-x-auto scrollbar-thin scrollbar-thumb-gray-400">
+         <div className="flex items-center justify-start mt-3 gap-3 overflow-x-auto scrollbar-thin scrollbar-thumb-gray-400">
+          <div onClick={()=>handleRemoveHighlight()} className="text-gray-500 shrink-0">
+          <MdCancel size={45} />
+          </div>
   {colorList.map((color, index) => (
     <div onClick={()=> handTextColor(index)}
       key={index}
