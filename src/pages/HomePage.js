@@ -557,6 +557,7 @@ const HomePage  = ()=> {
   const [pageIndex, setPageIndex] = useState(1);
   const [showPopup, setShowPopup] = useState(false);
 const [textList, setTextList] = useState([]);
+const [showToast, setShowToast] = useState(false);
   const togglePopup = () => {
       setShowPopup(true);
       setTimeout(()=>{
@@ -570,17 +571,12 @@ const [textList, setTextList] = useState([]);
   
   const [itemCount, setItemCount] = useState([])
   const {user} = useAuthContext()
- 
-
-
-
   const handleAdd = () => {
     if(currentVersion === "AMH"){
       if ( myNumber < bibleData?.chapters.length - 1) {
         setMyNumber(myNumber + 1); // Go to next chapter
         localStorage.setItem("myNumber", myNumber + 1)
       }
-
     }
      else {
       if (myNumber < bibleData?.text.length - 1) {
@@ -589,7 +585,7 @@ const [textList, setTextList] = useState([]);
       }
 
      }
-    
+   
   };
 
   // Decrement the chapter number to go to the previous chapter
@@ -633,6 +629,55 @@ const [textList, setTextList] = useState([]);
 
 // }, [textColor]);
 
+
+const copyText = ()=> {
+
+  const text = "hello"; // Text to copy
+
+  let myBook=''
+    let wholeBookmark = ''
+    let wholeverseNumber = ''
+    let verseId = ''
+
+  
+      if(currentVersion === 'ANY'){
+        myBook = bookList[bookNumber].anywaa
+
+      } else if(currentVersion === 'AMH'){
+        myBook =  bookList[bookNumber].amharic.split('_')[1].split('.')[0]
+      } else {
+        myBook =  bookList[bookNumber].title
+      }
+
+    if(textList.length === 1){
+      wholeBookmark = textList[0].verse
+      wholeverseNumber = textList[0].id.split('.')[2]
+      // verseId = textList[0].id.split('.')[2]
+      
+    } else if(textList.length > 1){
+      textList.map((text)=> {
+        wholeBookmark += `${text.verse} `
+        wholeverseNumber += `${text.id.split('.')[2]},  `
+      })
+    }
+
+    // const bookmarkData = {verse: wholeBookmark, book: `${myBook} ${verseList[0].split('.')[1]}: ${wholeverseNumber} `, version: currentVersion}
+    const textTobeCopied = `${myBook} ${verseList[0].split('.')[1]}: ${wholeverseNumber} \n ${wholeBookmark}`
+
+  navigator.clipboard.writeText(textTobeCopied)
+      .then(() => {
+       
+          setTextList([])
+         setShowToast(true);
+         setTimeout(()=>{
+            setShowToast(false);
+         }, 2000)
+      })
+      .catch((err) => {
+          console.error("Failed to copy text: ", err);
+      });
+
+}
 
 
   const fetchData = (testement, book, version)=> {
@@ -825,6 +870,7 @@ verseColor.map(async(verse)=> {
 
 const hideDialog = ()=> {
   setVerseList([])
+  setTextList([])
 }
 
 const handlePageIndex = (index)=>{
@@ -987,6 +1033,7 @@ if(user){
   </select>
 </div>
 
+
 {
   dialog && <div className=" w-[75%] z-50 dark:bg-slate-900 bg-slate-100 absolute p-2 shadow-lg rounded-md overflow-auto max-h-[80vh]">
     <div className="w-full flex h-10 dark:text-white text-gray-400 justify-between items-center">
@@ -1036,6 +1083,10 @@ if(user){
    
   </div>
 )}
+
+
+
+{ showToast &&  <div className="bottom-52 text-2xl left-[37%] text-gray-800  bg-white dark:bg-slate-900  md:left-[50%] fixed">Text copied!</div>}
 
 {
   showPopup && <div className="relative">
@@ -1207,17 +1258,13 @@ if(user){
 
          <div className="flex justify-between  w-[60%] items-center">
             <div onClick={handleBookMark}><MdOutlineBookmarkAdd size={35} /></div>
-            <div><FaRegCopy size={28} /></div>
+            <div onClick={copyText}><FaRegCopy size={28} /></div>
             <div><FaShareNodes size={28} /></div>
             <div><TfiViewListAlt size={28} /></div>
-
           </div>
-
           <div>
           <MdOutlineCancel onClick={hideDialog}  size={28}/>
           </div>
-
-
          </div>
 
          <div className="flex items-center justify-start mt-3 gap-3 overflow-x-auto scrollbar-thin scrollbar-thumb-gray-400">
@@ -1231,17 +1278,8 @@ if(user){
     ></div>
   ))}
 </div>
-
-
         </div>}
-
-
-</div>
-
-
-            
-               
-        
+</div>  
     )
 }
 
