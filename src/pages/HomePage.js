@@ -525,9 +525,6 @@ const HomePage  = ()=> {
     'bg-green-300/35',  // Mint Green
     'bg-purple-300/40', // Light Purple
   ];
-  
-  
-
   const [bibleData, setBibleData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -565,10 +562,6 @@ const [showToast, setShowToast] = useState(false);
       }, 4000)
   };
 
-
-
-
-  
   const [itemCount, setItemCount] = useState([])
   const {user} = useAuthContext()
   const handleAdd = () => {
@@ -593,8 +586,6 @@ const [showToast, setShowToast] = useState(false);
     if (myNumber > 0) {
       setMyNumber(myNumber - 1); // Go to previous chapter
       localStorage.setItem("myNumber", myNumber - 1)
-
-    
     }
   };
 
@@ -624,11 +615,6 @@ const [showToast, setShowToast] = useState(false);
         });
     }
   }
-//   useEffect(() => {
- 
-
-// }, [textColor]);
-
 
 const copyText = ()=> {
 
@@ -639,7 +625,6 @@ const copyText = ()=> {
     let wholeverseNumber = ''
     let verseId = ''
 
-  
       if(currentVersion === 'ANY'){
         myBook = bookList[bookNumber].anywaa
 
@@ -1260,7 +1245,9 @@ if(user){
             <div onClick={handleBookMark}><MdOutlineBookmarkAdd size={35} /></div>
             <div onClick={copyText}><FaRegCopy size={28} /></div>
             <div><FaShareNodes size={28} /></div>
+            <Link to={'/versecompare'}>
             <div><TfiViewListAlt size={28} /></div>
+            </Link>
           </div>
           <div>
           <MdOutlineCancel onClick={hideDialog}  size={28}/>
