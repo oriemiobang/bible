@@ -555,6 +555,7 @@ const HomePage  = ()=> {
   const [showPopup, setShowPopup] = useState(false);
 const [textList, setTextList] = useState([]);
 const [showToast, setShowToast] = useState(false);
+const [verseNumb, setVerseNumb] = useState(0);
   const togglePopup = () => {
       setShowPopup(true);
       setTimeout(()=>{
@@ -800,7 +801,7 @@ const handleDialog = ()=> {
   setDialog(false)
 }
 
-const handleVerseClick = (id, text) => {
+const handleVerseClick = (id, text, verseNumb) => {
   if (verseList.includes(id)) {
     const updatedVerselist = verseList.filter(item => item !== id);
     setVerseList(updatedVerselist);
@@ -810,6 +811,10 @@ const handleVerseClick = (id, text) => {
 
   }
   setIsBottomSheetOpen(true);
+
+  // console.log( myNumber)
+  setVerseNumb(verseNumb)
+  
 };
 
 
@@ -1141,11 +1146,10 @@ if(user){
         : "underline decoration-dotted decoration-gray-500 underline-offset-4"
       : bgColor? `${bgColor}`: ""
   }
-  onClick={() => handleVerseClick(`${bibleData.text[myNumber].ID}.${section.ID}`, section.text)}
+  onClick={() => handleVerseClick(`${bibleData.text[myNumber].ID}.${section.ID}`, section.text, section.ID)}
 >
   {section.text}
 </p>
-
                 {
                   // console.log(textColor)
                   textColor.find((item) => item.id === `${bibleData.text[myNumber].ID}.${section.ID}`) &&
@@ -1245,7 +1249,7 @@ if(user){
             <div onClick={handleBookMark}><MdOutlineBookmarkAdd size={35} /></div>
             <div onClick={copyText}><FaRegCopy size={28} /></div>
             <div><FaShareNodes size={28} /></div>
-            <Link to={'/versecompare'}>
+            <Link to={'/versecompare'} state={{verseNumb: verseNumb, myNumber: myNumber}}>
             <div><TfiViewListAlt size={28} /></div>
             </Link>
           </div>
