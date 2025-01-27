@@ -528,14 +528,14 @@ const VerseCompare = ()=> {
   const giveData = ()=> {
     const test = localStorage.getItem('currentTestement')
     const book = localStorage.getItem('currentBook')
-    console.log('here in give')
+    // console.log('here in give')
     availableVersions.map((version)=> {
       fetchData(test, book, version);
     })
   }
 
     const fetchData = (testement, book, version)=> {
-      console.log('here in fetch')
+      // console.log('here in fetch')
     let path = ""
     if(version === "ANY"){
       path = `/api/any/${testement}/${book}`
@@ -616,7 +616,7 @@ const VerseCompare = ()=> {
   }
 
 
-  {console.log(verseList)}
+  // {console.log(verseList)}
   return(
 
     verseList.length < 5 ? <div className="w-full h-screen flex items-center justify-center">

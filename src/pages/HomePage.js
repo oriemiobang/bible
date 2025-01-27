@@ -665,17 +665,74 @@ const copyText = ()=> {
 
 }
 
+const share = () => {
+     let myBook=''
+    let wholeBookmark = ''
+    let wholeverseNumber = ''
+    let verseId = ''
 
-  const fetchData = (testement, book, version)=> {
+  
+      if(currentVersion === 'ANY'){
+        myBook = bookList[bookNumber].anywaa
+
+      } else if(currentVersion === 'AMH'){
+        myBook =  bookList[bookNumber].amharic.split('_')[1].split('.')[0]
+      } else {
+        myBook =  bookList[bookNumber].title
+      }
+
+   
+
+    if(textList.length === 1){
+      wholeBookmark = textList[0].verse
+      wholeverseNumber = textList[0].id.split('.')[2]
+      // verseId = textList[0].id.split('.')[2]
+      
+
+    } else if(textList.length > 1){
+      textList.map((text)=> {
+        wholeBookmark += `${text.verse} `
+        wholeverseNumber += `${text.id.split('.')[2]},  `
+
+      })
+
+
+
+    }
+
+
+    const shareData = {verse: wholeBookmark, book: `${myBook} ${verseList[0].split('.')[1]}: ${wholeverseNumber} `, version: currentVersion}
+
+  if (navigator.share) {
+    navigator
+      .share({
+        title:  `${shareData.verse} \n ${shareData.version}` , 
+        text: ` ${shareData.version} \n ${shareData.book} \n ${shareData.verse}`,            
+
+      })
+      .then(() => console.log("Verse shared successfully"))
+      .catch((err) => console.error("Error sharing:", err));
+  } else {
+    // Fallback for browsers that don't support Web Share API
+    alert("Sharing is not supported on this browser.");
+  }
+};
+
+
+  const fetchData = (testement, book )=> {
+    let version = localStorage.getItem('selectedVersion')
     let path = ""
+    const myNumb = localStorage.getItem('bookNumber');
     if(version === "ANY"){
     
       path = `/api/any/${testement}/${book}`
     }else if(version === "AMH"){
-      path = `/api/amh/${book}`
+      path = `/api/amh/${bookList[myNumb].amharic}`
+        // path = `/api/amh/${bookList[myNumb].amharic}`
     } else{
       path = `/api/eng/${testement}/${book}/${version}`
     }
+    setLoading(true)
     
  
     // Fetch data from the backend API
@@ -905,6 +962,7 @@ const handleBookMark = async () => {
 
 
     const bookmarkData = {verse: wholeBookmark, book: `${myBook} ${verseList[0].split('.')[1]}: ${wholeverseNumber} `, version: currentVersion}
+    console.log(bookmarkData)
     setTextList([])
   try {
 
@@ -973,7 +1031,7 @@ if(user){
     value={`${bookNumber + 1}_${currentBook}`} 
     className="md:w-[50%] px-3 py-2 border border-gray-300 rounded-md dark:bg-slate-900 dark:text-white bg-white text-gray-700 focus:ring-2 focus:ring-blue-500 focus:outline-none"
   >
-    {bookList.map((book, index) => {
+    {bookList.map((book) => {
       const key = parseInt(book.amharic.split('_')[0], 10);
       // console.log(key)
 
@@ -1100,8 +1158,9 @@ if(user){
 </div>
 <div className= "md:pt-56 pt-36  md:w-[60%] md:text-lg lg:w-[55%] sm:w-[70%] mt-5 md:tracking-wide leading-7 md:leading-9  p-5 shadow-sm">
 {/* {console.log(bibleData?.chapters[myNumber]?.verses)} */}
+{console.log(currentVersion)}
 { 
-      currentVersion === "AMH"?  bibleData?.chapters[myNumber]?.verses.map((section, index)=> {
+      localStorage.getItem('selectedVersion') === "AMH"?  bibleData?.chapters[myNumber]?.verses.map((section, index)=> {
         return (
           <div>
             {index ===0 && <div className="flex gap-2 justify-center font-extrabold text-2xl pb-5">
@@ -1248,7 +1307,7 @@ if(user){
          <div className="flex justify-between  w-[60%] items-center">
             <div onClick={handleBookMark}><MdOutlineBookmarkAdd size={35} /></div>
             <div onClick={copyText}><FaRegCopy size={28} /></div>
-            <div><FaShareNodes size={28} /></div>
+            <div onClick={share}><FaShareNodes size={28} /></div>
             <Link to={'/versecompare'} state={{verseNumb: verseNumb, myNumber: myNumber}}>
             <div><TfiViewListAlt size={28} /></div>
             </Link>
